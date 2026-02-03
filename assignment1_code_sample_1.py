@@ -21,7 +21,7 @@ def get_user_input():
 
 EMAIL_REGEX = re.compile(r"^[^@]+@[^@]+\.[^@]+$")
 
-def send_email(to, subject, body, smtp_host = "smtp.example.com", smtp_port=507):
+def send_email(to: str, subject: str, body: str, smtp_host = "smtp.example.com", smtp_port=507):
     if not EMAIL_REGEX.match(to):
         raise ValueError("Invalid email address.")
     
