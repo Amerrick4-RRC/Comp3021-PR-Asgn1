@@ -47,7 +47,7 @@ def save_to_db(data):
     if not isinstance(data, str) or len(data) > 255:
         raise ValueError("Invalid data")
     
-    query = f"INSERT INTO mytable (column1, column2) VALUES ('%s', '%s')"
+    query = "INSERT INTO mytable (column1, column2) VALUES ('%s', '%s')"
     connection = pymysql.connect(**db_config)
     cursor = connection.cursor()
     cursor.execute(query, (data, "Another Value"))
