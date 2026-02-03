@@ -2,6 +2,15 @@ import os
 import pymysql
 from urllib.request import urlopen
 import requests
+import smtplib
+from email.message import EmailMessage
+import re
+
+db_config = {
+    "host": os.getenv("DB_HOST"),
+    "user": os.getenv("DB_User"),
+    "password": os.getenv("DB_PASSWORD")
+}
 
 def get_user_input():
     user_input = input('Enter your name: ')
@@ -10,9 +19,22 @@ def get_user_input():
     else:
         return user_input
 
-def send_email(to, subject, body):
-    #repair to us smtp and encryption, os.system is vulnerable to injection with f string use, validate inputs
-    os.system(f'echo {body} | mail -s "{subject}" {to}')
+EMAIL_REGEX = re.compile(r"^[^@]+@[^@]+\.[^@]+$")
+
+def send_email(to, subject, body, smtp_host = "smtp.example.com", smtp_port=507):
+    if not EMAIL_REGEX.match(to):
+        raise ValueError("Invalid email address.")
+    
+    msg = EmailMessage()
+    msg["To"] = to
+    msg["From"] = "noreply@example.com"
+    msg["Subject"] = subject
+    msg.set_content(body)
+
+    with smtplib.SMTP(smtp_host, smtp_port) as server:
+        server.starttls()
+        server.login("smtp_user", "smtp_password")
+        server.send_message(msg)
 
 def get_data():
     url = 'https://insecure-api.com/get-data' 
@@ -21,11 +43,14 @@ def get_data():
     return responce.text
 
 def save_to_db(data):
-    # Add appropriate data integrity checks prior to insertion
-    query = f"INSERT INTO mytable (column1, column2) VALUES ('{data}', 'Another Value')"
+
+    if not isinstance(data, str) or len(data) > 255:
+        raise ValueError("Invalid data")
+    
+    query = f"INSERT INTO mytable (column1, column2) VALUES ('%s', '%s')"
     connection = pymysql.connect(**db_config)
     cursor = connection.cursor()
-    cursor.execute(query)
+    cursor.execute(query, (data, "Another Value"))
     connection.commit()
     cursor.close()
     connection.close()
